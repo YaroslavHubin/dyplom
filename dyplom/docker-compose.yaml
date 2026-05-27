@@ -10,6 +10,15 @@ services:
     depends_on:
       - mongodb
 
+  generator:
+    image: yaroslav333/dyplom:latest
+    container_name: Libsodium_real_time_data_cypher
+    command: python Libsodium_real_time_data_cypher.py
+    environment:
+      - MONGO_URL=mongodb://mongodb:27017/solar_system
+    depends_on:
+      - mongodb
+
   mongodb:
     image: mongo:6.0
     container_name: mongodb
