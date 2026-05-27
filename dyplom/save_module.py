@@ -2,8 +2,9 @@ import base64
 from pymongo import MongoClient
 import pymongo
 from cfg import name
+import os
 
-name_db = name
+name_db = os.getenv("MONGO_URL", "mongodb://localhost:27017/solar_system")
 
 def save_to_mongodb(encrypted_data):
     """

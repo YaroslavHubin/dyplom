@@ -4,11 +4,14 @@ from nacl.signing import VerifyKey, SigningKey
 from nacl.public import PrivateKey, PublicKey, Box
 from cfg import name
 from datetime import datetime
+import os
+import pymongo
 
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
 
-client = pymongo.MongoClient(name)
+mongo_url = os.getenv("MONGO_URL", "mongodb://localhost:27017/solar_system")
+client = pymongo.MongoClient(mongo_url)
 db = client["solar_system"]
 collection = db["encrypted_data"]
 
@@ -392,4 +395,4 @@ def logs():
     return render_template("logs.html", logs=logs, sort_by=sort_by, order=order, sensor_filter=sensor_filter)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5088, debug=True)
