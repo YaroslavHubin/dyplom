@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Статистика</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <nav>
+        <ul style="list-style:none; display:flex; gap:20px; padding:0;">
+            <li><a href="{{ url_for('index') }}">Головна</a></li>
+            <li><a href="{{ url_for('monitor') }}">Моніторинг</a></li>
+            <li><a href="{{ url_for('logs') }}">Логи</a></li>
+            <li><a href="{{ url_for('stats') }}">Статистика</a></li>
+            <li><a href="{{ url_for('login') }}">Вихід</a></li>
+        </ul>
+    </nav>
+
+    <h2 class="section-title">Статистика по датчику {{ sensor }}</h2>
+
+    <form method="get" action="{{ url_for('stats') }}">
+        <label for="sensor">Датчик:</label>
+        <select name="sensor" id="sensor">
+            <option value="INA226" {% if sensor=="INA226" %}selected{% endif %}>INA226</option>
+            <option value="PZEM017" {% if sensor=="PZEM017" %}selected{% endif %}>PZEM017</option>
+        </select>
+
+         <div class="form-row">
+            <label>Початок:</label>
+            <input type="datetime-local" name="start_date" value="{{ start_date_str }}" step="1">
+        </div>
+
+        <br>
+
+        <div class="form-row">
+            <label>Кінець:</label>
+            <input type="datetime-local" name="end_date" value="{{ end_date_str }}" step="1">
+        </div>
+
+        <br>
+
+        <button type="submit">Аналізувати</button>
+    </form>
+
+    <table border="1" cellpadding="5">
+        <tr>
+            <th>Параметр</th>
+            <th>Середнє</th>
+            <th>Мінімум</th>
+            <th>Максимум</th>
+        </tr>
+        {% for param, values in stats_data.items() %}
+        <tr>
+            <td>{{ param }}</td>
+            <td>{{ "%.2f"|format(values.avg) }}</td>
+            <td>{{ "%.2f"|format(values.min) }}</td>
+            <td>{{ "%.2f"|format(values.max) }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <canvas id="statsChart"></canvas>
+
+    <script>
+    const ctx = document.getElementById('statsChart').getContext('2d');
+
+    const colors = ["#e8751a", "#c51350", "#8a1253", "#fda403"];
+
+    const logs = {{ logs | tojson }};
+    const statsData = {{ stats_data | tojson }};
+
+    const labels = logs.map(log => log.timestamp);
+
+    function getPeakTypes(data) {
+        const filtered = data.filter(v => v !== null);
+
+        const min = Math.min(...filtered);
+        const max = Math.max(...filtered);
+
+        return data.map(v => {
+            if (v === null) return "normal";
+            if (v === min) return "min";
+            if (v === max) return "max";
+            return "normal";
+        });
+    }
+
+    const datasets = Object.keys(statsData).map((param, index) => {
+        const data = logs.map(log => log[param] ?? null);
+        const peakTypes = getPeakTypes(data);
+
+        return {
+            label: param,
+            data: data,
+            borderColor: colors[index % colors.length],
+            tension: 0.3,
+
+            pointRadius: peakTypes.map(t => t === "normal" ? 3 : 6),
+
+            pointBackgroundColor: peakTypes.map(t => {
+                if (t === "min") return "blue";
+                if (t === "max") return "red";
+                return colors[index % colors.length];
+            }),
+
+            pointBorderColor: peakTypes.map(t => {
+                if (t === "min") return "darkblue";
+                if (t === "max") return "darkred";
+                return colors[index % colors.length];
+            }),
+
+            fill: false
+        };
+    });
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text: "Графік параметрів"
+                }
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        maxRotation: 45,
+                        minRotation: 45
+                    }
+                }
+            }
+        }
+    });
+    </script>
+
+    <h3 class="section-title">Експорт статистики</h3>
+    <form method="post" action="{{ url_for('export_stats') }}">
+        <input type="hidden" name="sensor" value="{{ sensor }}">
+        <input type="hidden" name="start_date" value="{{ start_date_str }}">
+        <input type="hidden" name="end_date" value="{{ end_date_str }}">
+
+        <label for="user_private_key">Ваш приватний ключ (для підписання):</label>
+        <input type="text" id="user_private_key" name="user_private_key" required>
+        <button type="submit">Експорт у JSON</button>
+    </form>
+
+
+    <h3 class="section-title">Перевірка імпорту статистики</h3>
+    <form method="post" action="{{ url_for('verify_stats_import') }}">
+        <label for="file_content">Вміст JSON файлу:</label><br>
+        <textarea id="file_content" name="file_content" class="textarea-field" rows="8" required></textarea><br>
+        <button type="submit">Перевірити</button>
+    </form>
+
+</body>
+</html>

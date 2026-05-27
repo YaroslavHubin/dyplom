@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Авторизація</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<h2>Авторизація</h2>
+<form method="post">
+Пароль: <input type="password" name="password"><br>
+Цифровий підпис: <input type="text" name="signature"><br>
+<input type="submit" value="Увійти">
+</form> 
+</body>
+</html>

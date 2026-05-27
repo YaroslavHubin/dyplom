@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Головна</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav>
+        <ul style="list-style:none; display:flex; gap:20px; padding:0;">
+            <li><a href="{{ url_for('index') }}">Головна</a></li>
+            <li><a href="{{ url_for('monitor') }}">Моніторинг</a></li>
+            <li><a href="{{ url_for('logs') }}">Логи</a></li>
+            <li><a href="{{ url_for('stats') }}">Статистика</a></li>
+            <li><a href="{{ url_for('login') }}">Вихід</a></li>
+        </ul>
+    </nav>
+
+    <h1>Вітаємо у системі моніторингу</h1>
+
+    <h2>Налаштування ключів</h2>
+    <form method="post" action="{{ url_for('set_keys') }}">
+        Публічний ключ сервера: <input type="text" name="server_public_key"><br>
+        Приватний ключ користувача: <input type="text" name="user_private_key"><br>
+        <input type="submit" value="Встановити ключі">
+    </form>
+</body>
+</html>

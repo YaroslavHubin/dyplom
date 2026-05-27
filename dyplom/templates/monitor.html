@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Моніторинг</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav>
+        <ul style="list-style:none; display:flex; gap:20px; padding:0;">
+            <li><a href="{{ url_for('index') }}">Головна</a></li>
+            <li><a href="{{ url_for('monitor') }}">Моніторинг</a></li>
+            <li><a href="{{ url_for('logs') }}">Логи</a></li>
+            <li><a href="{{ url_for('stats') }}">Статистика</a></li>
+            <li><a href="{{ url_for('login') }}">Вихід</a></li>
+        </ul>
+    </nav>
+
+    <h2>Моніторинг даних</h2>
+
+    <div class="chart-container">
+        <canvas id="inaChart"></canvas>
+    </div>
+
+    <div class="chart-container">
+        <canvas id="pzemChart"></canvas>
+    </div>
+
+    <script>
+        // Дані передаються із Flask у шаблон
+        const data = {{ data|tojson }};
+
+        // INA226 графік (Pmax, Voc, Isc)
+        const inaLabels = data.map(entry => entry.INA226.timestamp);
+        const inaPmax = data.map(entry => entry.INA226.Pmax);
+        const inaVoc = data.map(entry => entry.INA226.Voc);
+        const inaIsc = data.map(entry => entry.INA226.Isc);
+
+        new Chart(document.getElementById('inaChart'), {
+            type: 'line',
+            data: {
+                labels: inaLabels,
+                datasets: [
+                    { label: 'Pmax', data: inaPmax, borderColor: 'red', fill: false },
+                    { label: 'Voc', data: inaVoc, borderColor: 'blue', fill: false },
+                    { label: 'Isc', data: inaIsc, borderColor: 'green', fill: false }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: { title: { display: true, text: 'INA226 Дані' } }
+            }
+        });
+
+        // PZEM017 графік (Voltage, Current, Power)
+        const pzemLabels = data.map(entry => entry.PZEM017.timestamp);
+        const pzemVoltage = data.map(entry => entry.PZEM017.Voltage);
+        const pzemCurrent = data.map(entry => entry.PZEM017.Current);
+        const pzemPower = data.map(entry => entry.PZEM017.Power);
+
+        new Chart(document.getElementById('pzemChart'), {
+            type: 'line',
+            data: {
+                labels: pzemLabels,
+                datasets: [
+                    { label: 'Voltage', data: pzemVoltage, borderColor: 'orange', fill: false },
+                    { label: 'Current', data: pzemCurrent, borderColor: 'purple', fill: false },
+                    { label: 'Power', data: pzemPower, borderColor: 'brown', fill: false }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: { title: { display: true, text: 'PZEM017 Дані' } }
+            }
+        });
+    </script>
+</body>
+</html>

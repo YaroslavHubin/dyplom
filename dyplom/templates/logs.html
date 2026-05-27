@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Логи</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <nav>
+        <ul style="list-style:none; display:flex; gap:20px; padding:0;">
+            <li><a href="{{ url_for('index') }}">Головна</a></li>
+            <li><a href="{{ url_for('monitor') }}">Моніторинг</a></li>
+            <li><a href="{{ url_for('logs') }}">Логи</a></li>
+            <li><a href="{{ url_for('stats') }}">Статистика</a></li>
+            <li><a href="{{ url_for('login') }}">Вихід</a></li>
+        </ul>
+    </nav>
+
+    <h2>Логи даних</h2>
+
+    <form method="get" action="{{ url_for('logs') }}">
+        <label for="sensor">Фільтр за датчиком:</label>
+        <select name="sensor" id="sensor">
+            <option value="">Всі</option>
+            <option value="INA226" {% if sensor_filter == "INA226" %}selected{% endif %}>INA226</option>
+            <option value="PZEM017" {% if sensor_filter == "PZEM017" %}selected{% endif %}>PZEM017</option>
+        </select>
+        <button type="submit">Фільтрувати</button>
+    </form>
+
+     <table border="1" cellpadding="5">
+        <tr>
+            <th>
+                <a href="{{ url_for('logs', sort_by='timestamp', order='asc' if order=='desc' else 'desc', sensor=sensor_filter) }}">
+                    Дата {% if sort_by=='timestamp' %}({{ order }}){% endif %}
+                </a>
+            </th>
+            <th>
+                <a href="{{ url_for('logs', sort_by='sensor', order='asc' if order=='desc' else 'desc', sensor=sensor_filter) }}">
+                    Датчик {% if sort_by=='sensor' %}({{ order }}){% endif %}
+                </a>
+            </th>
+            <th>
+                <a href="{{ url_for('logs', sort_by='data', order='asc' if order=='desc' else 'desc', sensor=sensor_filter) }}">
+                    Дані {% if sort_by=='data' %}({{ order }}){% endif %}
+                </a>
+</th>
+        </tr>
+        {% for log in logs %}
+        {% if log.error %}
+            <tr><td colspan="3">{{ log.error }}</td></tr>
+        {% else %}
+            <tr>
+                <td data-label="Дата">{{ log.timestamp }}</td>
+                <td data-label="Датчик">{{ log.sensor }}</td>
+                <td data-label="Дані">
+                    {% for k,v in log.data.items() %}
+                        {{ k }}: {{ v }}<br>
+                    {% endfor %}
+                </td>
+            </tr>
+        {% endif %}
+        {% endfor %}
+    </table>
+
+    <!-- Експорт -->
+    <h3>Експорт логів</h3>
+    <form method="post" action="{{ url_for('export_logs') }}">
+        <label for="user_private_key">Ваш приватний ключ (для підписання):</label>
+        <input type="text" id="user_private_key" name="user_private_key" required>
+        <button type="submit">Експорт у JSON</button>
+    </form>
+
+    <h3>Перевірка імпорту</h3>
+    <form method="post" action="{{ url_for('verify_import') }}">
+        <label for="file_content">Вміст JSON файлу (разом із logs і signature):</label><br>
+        <textarea id="file_content" name="file_content" class="textarea-field" rows="8" required></textarea><br>
+        <button type="submit">Перевірити</button>
+    </form>
+</body>
+</html>
